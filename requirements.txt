@@ -1,6 +1,2 @@
 streamlit
-numpy
-scikit-learn
-nltk
-pandas
-openai
+openai>=1.0.0
