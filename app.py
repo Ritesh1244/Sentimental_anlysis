@@ -1,8 +1,8 @@
 import streamlit as st
-import openai  # Not `from openai import OpenAI` — use `openai` directly
+import openai
 
-# Get API key from Streamlit secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Use the secret key from Streamlit secrets
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # === Streamlit UI ===
 st.title("Sentiment Analysis App")
@@ -17,8 +17,7 @@ if st.button("Analyze"):
         st.warning("⚠️ Please enter some text to analyze.")
     else:
         try:
-            # Make GPT call
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {
@@ -32,8 +31,7 @@ if st.button("Analyze"):
                 ]
             )
 
-            # Get result
-            result = response.choices[0].message["content"].strip()
+            result = response.choices[0].message.content.strip()
             st.subheader("Predicted Sentiment:")
             st.success(result)
 
