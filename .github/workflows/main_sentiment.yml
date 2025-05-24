@@ -1,0 +1,68 @@
+name: Build and deploy Python app to Azure Web App - sentiment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies (locally for verification, optional)
+        run: pip install -r requirements.txt
+
+      # Optional: Run tests here
+
+      - name: Zip source code for deployment
+        run: zip -r release.zip . -x "venv/*" ".git/*"
+
+      - name: Upload artifact for deployment
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Unzip artifact
+        run: unzip release.zip
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_14AE430123444E89828E28FFE32F85A7 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D41A4C5EF9EB4C30828E5B4763054D74 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F79D53110AC140ED89012D18CEA9F24B }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'sentiment'
+          slot-name: 'Production'
